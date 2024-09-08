@@ -1,20 +1,32 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
-#include <ctype.h>
-
-#include "chess/board.h"
-#include "chess/move.h"
 #include "misc/misc.h"
 #include "chess/fen.h"
+#include "chess/board.h"
+#include "chess/move.h"
+char* starting_board = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-char* starting_board =  "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-char* test_board =      "2r4N/3p4/1P1Q3K/B2P4/1pr1P2R/2n5/4kP1p/8 w KQkq - 0 1";
 
-void main() {
-    //struct FEN* fen = parseFEN(starting_board);
 
-    Board* board = init_board(test_board); // board is allocated, so free it later
-    printboard_info(*board); 
+int main() {
+    // Check that fen works
+    Fen* my_fen = (Fen*) malloc((int) sizeof(Fen));
+    zeroFen(my_fen);
+    parseFen(starting_board, my_fen);
+    printFen(my_fen);
+    //free(my_fen);
+    // Check that board works
+    Board* my_board = (Board*) malloc((int) sizeof(Board));
+    initPieces(my_fen->pieces, my_board);
+    printBoard(*my_board);
+    free(my_board);
+
+
+
+    int64_t m = get_mask('b', "f1");
+    printbf("bishop moved from:\n", m);
+    printf("exiting succsessfully!\n");
+    return 0;
 }
+
+ 

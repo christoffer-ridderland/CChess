@@ -2,113 +2,97 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-#include "fen.h"
-#include "board.h"
-/*
-    feNo: Forsyth–Edwards Notation
-    https://en.wikipedia.org/wiki/Forsyth-Edwards_Notation
-    feNo for starting position:          rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w
-    FENo (struct) for starting position: RNBQKBNRPPPPPPPP00000000000000000000000000000000pppppppprnbqkbnr
-    this is because the bitboard is ordered from a1 to h8
 
-    char* pieces;
-    Color turn; // white or black
-    char castling; // KQkq would be 0b1111, Qk would be 0b0110, etc.
-    int en_passant; // target square of en passant, if any, else "-" the move e4 would be "e3"
-    int halfmove; // number of halfmoves since last capture or pawn advance, used for 50 move rule
-    int fullmove; // starts at 1, incremented after black moves
-*/
-// only valid fen notation allowed
-struct FEN* parseFEN(char* fen) {
-    struct FEN* parsed = (struct FEN*)malloc(sizeof(struct FEN));
-    parsed->castling = 0;
-    int len = strlen(fen);
-    int outputIndex = 0;
-    int iter = 0;
-    for (int i = 0; i < len; i++) {
-        char c = fen[i];
+#include "fen.h"
+
+
+void zeroFen(Fen* fen) {
+    memset(fen->pieces, '\0', sizeof(fen->pieces));
+    fen->turn       = WHITE;
+    fen->castling   = 0;
+    fen->en_passant = -1;
+    fen->halfmove   = 0;
+    fen->fullmove   = 1;
+}
+
+// Takes a Fen* and a fen string and puts all data in the struct
+void parseFen(char* fen_str, Fen* fen) {
+    zeroFen(fen);
+    int length = strlen(fen_str);
+    int out_index = 0;
+    int field = 0;
+    for (int i = 0; i < length; i++) {
+        char c = fen_str[i];
         if (c == ' ') {
-            iter++;
+            field++;
             continue;
         }
-        switch (iter)
-        {
+        switch (field) {
         case 0:
             if (c == '/') {
-            // Skip slashes
             } else if (c >= '1' && c <= '8') {
-                int numEmptySquares = c - '0';
-                for (int j = 0; j < numEmptySquares; j++) {
-                    parsed->pieces[outputIndex++] = '0';
+                int emptySq = c - '0';
+                for (int j = 0; j < emptySq; j++) {
+                    fen->pieces[out_index++] = '0';
                 }
             } else {
-                parsed->pieces[outputIndex++] = c;
+                fen->pieces[out_index++] = c;
             }
             break;
-        
+
         case 1:
-            if (c == 'w') {
-                parsed->turn = WHITE;
-            } else if (c == 'b') {
-                parsed->turn = BLACK;
-            } else {
-                printf("Invalid turn: %c\n", c);
-                exit(1);
-            }
+            if (c == 'w')
+                fen->turn = WHITE;
+            else if (c == 'b')
+                fen->turn = BLACK;
+            else
+                exit(-1);
             break;
-        
+
         case 2:
-            switch (c)
-            {
+            switch (c) {
+            
             case 'K':
-                parsed->castling |= 0b1000;
+                fen->castling |= 0b1000;
                 break;
             case 'Q':
-                parsed->castling |= 0b0100;
+                fen->castling |= 0b0100;
                 break;
             case 'k':
-                parsed->castling |= 0b0010;
+                fen->castling |= 0b0010;
                 break;
             case 'q':
-                parsed->castling |= 0b0001;
+                fen->castling |= 0b0001;
                 break;
             default:
-                printf("Invalid castling: %c\n", c);
-                exit(1);
+                exit(-1);
                 break;
             }
             break;
         case 3:
-            if (c == '-') {
-                parsed->en_passant = -1;
-            } else {
+            if (c == '-')
+                fen->en_passant = -1;
+            else { // this is lowkey genious
                 int file = c - 'a';
-                int rank = fen[i+1] - '1';
-                parsed->en_passant = 8 * rank + file;
+                int rank = fen_str[i+1] - '1';
+                fen->en_passant = 8 * rank + file;
                 i++;
             }
             break;
         case 4:
-            parsed->halfmove = c - '0';
+            fen->halfmove = c - '0';
             break;
         case 5:
-            parsed->fullmove = c - '0';
+            fen->fullmove = c - '0';
             break;
         default:
-            printf("Invalid FEN: %s\n", fen);
-            exit(1);
+            exit(-1);
             break;
         }
-        
     }
-
-    // Null-terminate the output string
-    parsed->pieces[outputIndex] = '\0';
-    //printf("got here\n");
-    //printf("%s\n", parsed->pieces);
-    return parsed;
+    fen->pieces[out_index] = '\0'; // probably redundant;
 }
 
-void printfen(struct FEN* fen) {
+void printFen(Fen* fen) {
     printf("%s %c %d %d %d %d\n", fen->pieces, fen->turn == WHITE ? 'w' : 'b', fen->castling, fen->en_passant, fen->halfmove, fen->fullmove);
 }

@@ -5,16 +5,17 @@
 #include <ctype.h>
 
 #include "board.h"
-#include "fen.h"
-
+#include "../misc/misc.h"
 int64_t all(Board* board) {
     return board->white | board->black;
 }
+
+// might not need this
 int64_t empty(Board* board) {
     return ~all(board);
 }
 
-void set_zero(Board* board) {
+void setZero(Board* board) {
     board->white = 0;
     board->black = 0;
 
@@ -24,102 +25,81 @@ void set_zero(Board* board) {
     board->bishops = 0;
     board->queens = 0;
     board->kings = 0;
-
 }
 
-void set_piece(int index, Color color, Board* c_board, int16_t* p_board ) {
-    int64_t one = 1; // 1 in the 64th bit
-    int64_t* board = (color == WHITE) ? &c_board->white : &c_board->black;
-    *board |= one << index;
-    *p_board |= one << index;
+void setPiece(int i, char piece, Color color, Board* board) {
+    int64_t* c_board;
+    if (color == WHITE)
+        c_board = &board->white;
+    else
+        c_board = &board->black;
+    int64_t* p_board;
+    switch (piece){
+    case '0':
+        //*c_board &= (int64_t) 0 << i;
+        return;
+    case 'p':
+        p_board = &board->pawns;
+        //printf("%d ", i);
+        break;
+    case 'r':
+        p_board = &board->rooks;
+        break;
+    case 'n':
+        p_board = &board->knights;
+        break;
+    case 'b':
+        p_board = &board->bishops;
+        break;
+    case 'q':
+        p_board = &board->queens;
+        break;
+    case 'k':
+        p_board = &board->kings;
+        break;
+    }
+    *c_board |= (int64_t) 1 << i;
+    *p_board |= (int64_t) 1 << i;
 }
-void init_pieces(char* pieces, Board* board) {
-    set_zero(board);
-    int64_t one = 1; // 1 in the 64th bit
+
+void initPieces(char* pieces, Board* board) {
+    setZero(board);
     int row = 7;
     int col = 0;
-    int ci = row * 8 + col;
-    while(ci >= 0) {
-        printf("%d\n", ci);
+    int i = row * 8 + col;
+    
+    while (i >= 0) {
+        char c = pieces[i];
         Color color = BLACK;
-        char c = pieces[ci];
         if (c == '0') {
-            // do nothing
-        }
-        else if (isupper(c)) {
+            // nothing
+        } else if (isupper(c)) {
             color = WHITE;
-            c += 32; // convert to lowercase
+            c += 32;
         }
-        switch (c)
-        {
-        case 'p':
-            set_piece(ci, color, board, &board->pawns);
-            break;
-        case 'r':
-            set_piece(ci, color, board, &board->rooks);
-            break;
-        case 'n':
-            set_piece(ci, color, board, &board->knights);
-            break;
-        case 'b':
-            set_piece(ci, color, board, &board->bishops);
-            break;
-        case 'q':
-            set_piece(ci, color, board, &board->queens);
-            break;
-        case 'k':
-            set_piece(ci, color, board, &board->kings);
-            break;
-        default:
-            printf("Invalid piece: %c\n", c);
-            exit(1);
-            break;
-        }
-
+        setPiece(i, c, color, board);
+        //printbf("so far:", board->black);
         col++;
         if (col > 7) {
             col = 0;
             row--;
         }
-        ci = row * 8 + col;
+        i = row * 8 + col;
     }
 }
 
-Board* init_board(char* feNo) {
-    Board* board = (Board*) malloc( ( int ) sizeof(Board));
-    struct FEN* fen = parseFEN(feNo);
-    init_pieces(fen->pieces, board);
-    board->turn = fen->turn;
-    board->en_passant = fen->en_passant;
-    board->castling = fen->castling;
-    board->halfmove = fen->halfmove;
-    board->fullmove = fen->fullmove;
-
-    free(fen);
-    return board;
-}
-
-int64_t get_c_p(Color color, Board* board, int16_t p_board) {
-    if (color == WHITE) {
-        return board->white & p_board;
-    }
-    else {
-        return board->black & p_board;
-    }
-}
-
-void printbf(char* affix, int64_t binary) {
+void printbf(char* affix, int64_t bitboard) {
     printf("%s", affix);
     for (int i = 7; i >= 0; i--) {
         for (int j = 0; j <= 7; j++) {
-            printf("%d" "", (int) (binary >> (i * 8 + j)) & 1);
+            printf("%d" "", (int) (bitboard >> (i * 8 + j)) & 1);
         }
         printf("\n");
     }
     printf("\n\n");
 }
 
-void printboard_info(Board board) {
+void printBoard(Board board) {
     printf("I am printing board info\n");
     printbf("all: \n", all(&board));
     printbf("empty: \n", empty(&board));
@@ -137,6 +117,4 @@ void printboard_info(Board board) {
     printf("halfmove: %d\n", board.halfmove);
     printf("fullmove: %d\n", board.fullmove);
 
-    return 0;
 }
-
