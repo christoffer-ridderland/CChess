@@ -7,17 +7,19 @@
 
 
 void zeroFen(Fen* fen) {
-    memset(fen->pieces, '\0', sizeof(fen->pieces));
+    //memset(fen->pieces, '\0', sizeof(fen->pieces));
     fen->turn       = WHITE;
     fen->castling   = 0;
     fen->en_passant = -1;
     fen->halfmove   = 0;
     fen->fullmove   = 1;
+    fen->pieces[64] = '\0';
 }
 
 // Takes a Fen* and a fen string and puts all data in the struct
-void parseFen(char* fen_str, Fen* fen) {
-    zeroFen(fen);
+Fen* parseFen(char* fen_str) {
+    Fen* my_fen = (Fen*) malloc((int) sizeof(Fen));
+    zeroFen(my_fen);
     int length = strlen(fen_str);
     int out_index = 0;
     int field = 0;
@@ -30,21 +32,25 @@ void parseFen(char* fen_str, Fen* fen) {
         switch (field) {
         case 0:
             if (c == '/') {
+                break;
             } else if (c >= '1' && c <= '8') {
                 int emptySq = c - '0';
                 for (int j = 0; j < emptySq; j++) {
-                    fen->pieces[out_index++] = '0';
+                    my_fen->pieces[out_index] = '0';
+                    out_index++;
                 }
             } else {
-                fen->pieces[out_index++] = c;
+                my_fen->pieces[out_index] = c;
+                out_index++;
             }
+
             break;
 
         case 1:
             if (c == 'w')
-                fen->turn = WHITE;
+                my_fen->turn = WHITE;
             else if (c == 'b')
-                fen->turn = BLACK;
+                my_fen->turn = BLACK;
             else
                 exit(-1);
             break;
@@ -53,16 +59,16 @@ void parseFen(char* fen_str, Fen* fen) {
             switch (c) {
             
             case 'K':
-                fen->castling |= 0b1000;
+                my_fen->castling |= 0b1000;
                 break;
             case 'Q':
-                fen->castling |= 0b0100;
+                my_fen->castling |= 0b0100;
                 break;
             case 'k':
-                fen->castling |= 0b0010;
+                my_fen->castling |= 0b0010;
                 break;
             case 'q':
-                fen->castling |= 0b0001;
+                my_fen->castling |= 0b0001;
                 break;
             default:
                 exit(-1);
@@ -71,26 +77,27 @@ void parseFen(char* fen_str, Fen* fen) {
             break;
         case 3:
             if (c == '-')
-                fen->en_passant = -1;
+                my_fen->en_passant = -1;
             else { // this is lowkey genious
                 int file = c - 'a';
                 int rank = fen_str[i+1] - '1';
-                fen->en_passant = 8 * rank + file;
+                my_fen->en_passant = 8 * rank + file;
                 i++;
             }
             break;
         case 4:
-            fen->halfmove = c - '0';
+            my_fen->halfmove = c - '0';
             break;
         case 5:
-            fen->fullmove = c - '0';
+            my_fen->fullmove = c - '0';
             break;
         default:
             exit(-1);
             break;
         }
     }
-    fen->pieces[out_index] = '\0'; // probably redundant;
+    //my_fen->pieces[out_index] = '\0'; // probably redundant;
+    return my_fen;
 }
 
 void printFen(Fen* fen) {

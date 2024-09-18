@@ -19,7 +19,7 @@ typedef struct Fen {
 } Fen;
 
 void zeroFen(Fen* fen);
-void parseFen(char* fen_str, Fen* fen);
+Fen* parseFen(char* fen_str);
 void printFen(Fen* fen);
 
 #endif

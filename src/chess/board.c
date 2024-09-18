@@ -40,7 +40,6 @@ void setPiece(int i, char piece, Color color, Board* board) {
         return;
     case 'p':
         p_board = &board->pawns;
-        //printf("%d ", i);
         break;
     case 'r':
         p_board = &board->rooks;
@@ -67,7 +66,7 @@ void initPieces(char* pieces, Board* board) {
     int row = 7;
     int col = 0;
     int i = row * 8 + col;
-    
+    int j = 0;
     while (i >= 0) {
         char c = pieces[i];
         Color color = BLACK;
@@ -77,21 +76,22 @@ void initPieces(char* pieces, Board* board) {
             color = WHITE;
             c += 32;
         }
-        setPiece(i, c, color, board);
-        //printbf("so far:", board->black);
+        setPiece(j, c, color, board);
         col++;
         if (col > 7) {
             col = 0;
             row--;
         }
+        
         i = row * 8 + col;
+        j++;
     }
 }
 
 void printbf(char* affix, int64_t bitboard) {
     printf("%s", affix);
     for (int i = 7; i >= 0; i--) {
-        for (int j = 0; j <= 7; j++) {
+        for (int j = 0; j < 8; j++) {
             printf("%d" "", (int) (bitboard >> (i * 8 + j)) & 1);
         }
         printf("\n");
